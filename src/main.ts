@@ -6,11 +6,6 @@ import * as ballast from './ballast'
 import Immutable = require('immutable');
 //var uuid = require('uuid');
 
-declare var require:any
-var $ = require("jquery");
-///<reference path="../typings/velocity-animate/velocity-animate.d.ts"/>
-var Velocity = require('velocity-animate');
-
 var m = Immutable.OrderedMap<number,string>()
 type M = typeof m;
 
@@ -41,16 +36,7 @@ function v (model:M) {
         }),
         ballast.h('ul',{},model.reduce(
             (r,v,k) => {
-                r.push(ballast.h('li',{
-                    hook: {
-                        insert: (node) => {
-                            //console.log(Velocity)
-                            var targetHeight = node.scrollHeight
-                            //node.style.height="0px"
-                            //Velocity(node, "fadeIn", {duration: 1500})
-                        }
-
-                    }
+                r.push(ballast.h('li.fadeIn',{
                 },[`${k} : ${v}`])) ; return r
             },
             [])
