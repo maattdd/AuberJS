@@ -1,0 +1,27 @@
+{
+  "name": "ballast",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "immutable": "^3.7.6",
+    "imports-loader": "^0.6.5",
+    "jquery": "^2.2.0",
+    "lodash": "^4.0.0",
+    "maquette": "^2.1.6",
+    "snabbdom": "^0.3.1",
+    "velocity": "^0.7.2"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.11.1",
+    "gulp": "^3.9.0",
+    "gulp-typescript": "^2.10.0",
+    "gulp-typescript-compiler": "^1.0.1",
+    "typescript": "^1.7.5"
+  }
+}
