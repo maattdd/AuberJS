@@ -91,22 +91,25 @@ function ballastView <T> (model:Model<T>) {
         return mod
     }
 
-    return h('div#ballast_.grid.two.demo',[
+    return h('div#ballast_',[
         h('div#ballast_client',[
             v(find_model(model))
         ]),
         h('div#ballast_reactor',[
-            h('input', {
-                props: {
-                    type:"checkbox",
-                },
-                attrs: {
-                    checked:m.debug
-                },
-                on: {
-                    change: toggleDebug
-                }
-            },[]),
+            h('label',[
+                h('input', {
+                    props: {
+                        type:"checkbox",
+                    },
+                    attrs: {
+                        checked:m.debug
+                    },
+                    on: {
+                        change: toggleDebug
+                    }
+                },[]),
+                h('span.checkable',"Debug mode")
+            ]),
             h('input', {
                 props: {
                     type:"range",
