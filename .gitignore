@@ -1,3 +1,5 @@
 node_modules/
-bower_modules/
 *.js
+.idea
+public/bower_components/
+typings/
