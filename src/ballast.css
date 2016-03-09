@@ -1,0 +1,21 @@
+#ballast_container {
+    display: flex;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+#ballast_client {
+    padding: 10px;
+    flex: 1 1 80%;
+}
+
+#ballast_reactor {
+    flex: 1 1 20%;
+    padding: 10px;
+    background-color: rgb(191,21,155);
+}
+
+.fade {
+    transition: 'opacity 2s';
+}

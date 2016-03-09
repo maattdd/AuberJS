@@ -1,20 +1,17 @@
-/*
-TodoMVC
-*/
-
-import * as ballast from './ballast'
-import Immutable = require('immutable');
-//var uuid = require('uuid');
+import Ballast = require('./ballast')
+import Immutable = require('immutable')
+var uuid = require('uuid');
 
 var m = Immutable.OrderedMap<number,string>()
 type M = typeof m;
 
-ballast.init(
+Ballast.init(
+    module,
     document.body,
     m,
     v)
 
-class Add extends ballast.Action<M> {
+class Add extends Ballast.Action<M> {
     static counter = 1;
     id: number;
     todo: string;
@@ -25,18 +22,25 @@ class Add extends ballast.Action<M> {
 }
 
 function v (model:M) {
-    return ballast.h("div",{},[
-        ballast.h("input", {
+    return Ballast.h("div",{},[
+        Ballast.h("input", {
             props: {
-                placeholder:"Add a new todo"
+                placeholder:"AdddAdddsdfdo a neew todffffooo"
             },
             on: {
                 change: addTodo
             }
         }),
-        ballast.h('ul',{},model.reduce(
+        Ballast.h('ul',{},model.reduce(
             (r,v,k) => {
-                r.push(ballast.h('li.fadeIn',{
+                r.push(Ballast.h('li',{
+                    style: {
+                        opacity:'0',
+                        transition: 'opacity 1.7s',
+                        delayed: { opacity: '1'},
+                        remove: { opacity: '0'},
+                        destroy: { opacity: '0'}
+                    }
                 },[`${k} : ${v}`])) ; return r
             },
             [])
@@ -49,10 +53,3 @@ function addTodo (evt) {
     a.apply();
     evt.target.value = '' //clear the input
 }
-
-function addTodoAnimate (domNode,properties) {
-}
-
-function deleteTodoAnimate(domNode, removeDomNodeFunction, properties) {
-//    Velocity.animate(domNode, {height: 0}, 400, "ease-out", removeDomNodeFunction);
-};
