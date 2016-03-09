@@ -1,27 +1,30 @@
 {
   "name": "ballast",
   "version": "0.0.1",
-  "description": "",
+  "description": "Nano directed framework",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js --content-base public/ --progress --inline --hot"
   },
-  "author": "",
+  "author": "Matthieu Dubet",
   "license": "ISC",
   "dependencies": {
+    "chai": "^3.5.0",
+    "css-loader": "^0.23.1",
     "immutable": "^3.7.6",
     "imports-loader": "^0.6.5",
-    "jquery": "^2.2.0",
     "lodash": "^4.0.0",
-    "maquette": "^2.1.6",
     "snabbdom": "^0.3.1",
-    "velocity": "^0.7.2"
+    "style-loader": "^0.13.0",
+    "webpack": "^1.12.14",
+    "webpack-stream": "^3.1.0"
   },
   "devDependencies": {
-    "browser-sync": "^2.11.1",
-    "gulp": "^3.9.0",
-    "gulp-typescript": "^2.10.0",
-    "gulp-typescript-compiler": "^1.0.1",
-    "typescript": "^1.7.5"
+    "istanbul": "^0.4.2",
+    "mocha": "^2.4.5",
+    "node-sass": "^3.4.2",
+    "sass-loader": "^3.1.2",
+    "typescript": "^1.7.5",
+    "webpack": "^1.12.14"
   }
 }
