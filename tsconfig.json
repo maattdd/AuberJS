@@ -9,11 +9,12 @@
         "emitDecoratorMetadata": true,
         "declaration": false,
         "noImplicitAny": false,
-        "removeComments": true,
+        "removeComments": false,
         "noLib": false,
         "preserveConstEnums": true,
         "suppressImplicitAnyIndexErrors": true,
-        "outDir": "./public/"
+        "outDir": "./public/",
+        "sourceMap": true
     },
     "filesGlob": [
         "**/*.ts",
