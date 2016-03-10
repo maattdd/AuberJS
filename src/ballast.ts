@@ -20,35 +20,33 @@ require("../public/bower_components/picnic/picnic.min.css")
 require("./ballast.css");
 //require("")
 
+function print (msg, color='blue') {
+    console.info("[Ballast] %c" + msg, "color:" + color + ";font-weight:bold;");
+}
+
 var m;
 var v;
 var node;
+var up;
 
 var init_dom;
 var init_model;
 var init_view;
+var init_update;
 
 if (module.hot) {
     module.hot.accept()
     module.hot.dispose(function(data) {
-        console.log(init_dom)
-        console.log(init_model)
-        console.log(init_view)
         data.init_dom = init_dom;
         data.init_model = init_model;
         data.init_view = init_view;
-        console.log(data)
+        data.init_update = init_update;
     })
 }
 
 if (module.hot.data) {
     var d = module.hot.data
-    console.log("BEGIN Datdda")
-    console.log(d.init_dom);
-    console.log(d.init_model);
-    console.log(d.init_view);
-    console.log("END Data")
-    init2(d.init_dom,d.init_model,d.init_view)
+    init2(d.init_dom,d.init_model,d.init_view,d.init_update)
 }
 
 function draw() {
@@ -61,28 +59,57 @@ function draw() {
     }
 }
 
-export function init <T> (parent_module,dom,model,view) {
+function updater (action) {
+    console.groupCollapsed('Applying action ')
+    print("Previous model:")
+    console.log(m.currentModel)
+    print("Applying action:")
+    console.log(action)
+    m.actionHistory = m.actionHistory.push(action)
+    m.modelHistory = m.modelHistory.push(up(m.currentModel,action))
+    m.debug_time = m.historySize-1
+    print("New model:")
+    console.log(m.currentModel)
+    console.groupEnd()
+    draw()
+}
+
+
+
+export function dispatch (action,callback) {
+    var upp = () => {
+        updater(action)
+    }
+    callback(upp,m.currentModel)
+}
+
+export function init <UserModel> (
+    parent_module,
+    dom:HTMLElement,
+    model:UserModel,
+    view,
+    update:(UserModel,action)=>UserModel) {
     if (parent_module.hot) {
         var pmh = parent_module.hot
         parent_module.hot.accept()
-        parent_module.hot.dispose(function() {
-            console.log("should dispose something")
-        })
-        if (parent_module.hot.data) {
-        }
     }
-    init2(dom,model,view)
+    init2(dom,model,view,update)
 }
 
-function init2 <T> (dom,model:T,view){
+function init2 <T> (dom,model:T,view,update) {
     init_dom = dom;
     init_view = view;
     init_model = model;
-
-    console.debug("kInit2:" + dom + model + view)
+    init_update = update;
 
     v = view;
-    m = new Model<T>(model);
+    up = update;
+
+    if (m) { // we are reloading
+        m.replay()
+    } else {
+        m = new Model<T>(model)
+    }
     node = ballastView(m);
 
     var container = document.getElementById('ballast_container')
@@ -94,27 +121,16 @@ function init2 <T> (dom,model:T,view){
     patch(container,node);
 }
 
-export abstract class Action <T> {
-    abstract reduce (model: T) : T;
-    apply () {
-        m.modelHistory = m.modelHistory.push(this.reduce(m.currentModel))
-        m.actionHistory = m.actionHistory.push(this)
-        m.debug_time = m.historySize-1
-        //m.model = this.reduce(m.model)
-        draw()
-    }
-}
-
 class Model <M> {
     modelHistory: Immutable.List<M>;
-    actionHistory: Immutable.List<Action<M>>;
+    actionHistory;
     debug:boolean;
     debug_time:number;
     constructor(m:M) {
         this.modelHistory = Immutable.List<M> ();
-        //this.actionHistory = Immutable.List<Action<M>> ();
         this.modelHistory = this.modelHistory.push(m)
-        //this.model = m;
+
+        this.actionHistory = Immutable.List ();
         this.debug = false;
         this.debug_time = 0;
     }
@@ -123,6 +139,15 @@ class Model <M> {
     }
     get currentModel() : M {
         return this.modelHistory.last()
+    }
+    private replay() {
+        print("Replaying",'green')
+        console.groupCollapsed('Replay')
+        this.modelHistory.clear()
+        this.actionHistory.forEach( action => {
+            updater(action)
+        })
+        console.groupEnd()
     }
 }
 
@@ -170,7 +195,7 @@ function ballastView <T> (model:Model<T>) {
                         change: toggleDebug
                     }
                 },[]),
-                h('span.checkable',"sdsddsdfssdfddfd")
+                h('span.checkable',"Run")
             ]),
             h('input', {
                 props: {
