@@ -76,7 +76,7 @@ function updater (action) {
 
 
 
-export function dispatch (action,callback) {
+export function dispatch (action,callback=(update,model)=>{updater(action)}) {
     var upp = () => {
         updater(action)
     }

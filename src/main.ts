@@ -1,5 +1,8 @@
 import Ballast = require('./ballast')
 import Immutable = require('immutable')
+import _ = require('lodash');
+
+require('todomvc-app-css/index.css')
 
 type Todo = {
     id:number,
@@ -11,7 +14,8 @@ type Todos = Immutable.List<Todo>
 var m = {
     counter     : 0,
     todos       : Immutable.List<Todo>(),
-    visibility  : 'all'
+    visibility  : 'all',
+    editedTodo  : 0
 }
 type M = typeof m;
 
@@ -25,91 +29,184 @@ Ballast.init(
 interface Action {
     type: string
     todo?: string
+    id?:number
 }
 
 function update (model:M,action:Action) : M {
     switch (action.type) {
         case "add-todo":
-        return {
-            counter: model.counter+1,
-            todos: model.todos.push({
-                id:model.counter+1,
-                todo:action.todo,
-                completed:false
-            }),
-            visibility: model.visibility
-        }
+        var ret = model;
+        ret.counter++;
+        ret.todos = ret.todos.push({
+            id:ret.counter,
+            todo:action.todo,
+            completed:false
+        })
+        return ret;
+
+        case "remove-todo":
+        var ret = model;
+        ret.todos = ret.todos.remove(
+            ret.todos.findIndex((todo)=>{
+                return todo.id === action.id
+            })
+        )
+        return ret
+
+        case "edit-todo":
+        var ret = model;
+        ret.editedTodo = action.id
+        return ret
     }
     return model
 }
 
-function filterTodos (todos:Todos):Todos {
-    return
+function uncompletedTodos (todos:Todos){
+    return todos.filter((todo)=>{
+        return !todo.completed
+    });
 }
 
-function uncompletedTodos (todos:Todos):Todos {
-    return 
-}
-
-function todo_tohtml (todo:Todo) {
-    return Ballast.h('li',
-    {
-        style: {
-            opacity:'0',
-            transition: 'opacity 1s',
-            delayed: { opacity: '1'},
-            remove: { opacity: '0'},
-            destroy: { opacity: '0'}
-        },
+function todo_tohtml (todo:Todo,model:M) {
+    return Ballast.h('li.todo',{
+        class:{
+            completed:todo.completed && todo.id != model.editedTodo,
+            editing:todo.id === model.editedTodo
+        }
     },
     [
-        Ballast.h('input',
-        {
-            props: {
-            type: 'checkbox'
-            }
-        }),
-        Ballast.h('span',{
-        on: {
-            //dblclick:editTodo(todo)
-        }},
-        todo.todo)
+        Ballast.h('div.view',[
+            Ballast.h('input.toggle',
+            {
+                props: {
+                    type: 'checkbox'
+                },
+                on: {
+                    toggle:() => {Ballast.dispatch ({type:'completed-todo',id:todo.id})}
+                }
+            }),
+            Ballast.h('label',
+            {
+                on: {
+                    dblclick:(evt) => {editTodo(todo)}
+                }
+            },
+            todo.todo
+            ),
+            Ballast.h('button.destroy',
+            {
+                on:{
+                    click:(evt)=>{removeTodo(todo)}
+                }
+            })])
     ])
 }
 
-function todos_tohtml (todos:Todos) {
+function todos_tohtml (todos:Todos,model:M) {
     var ret = []
     todos.forEach( (t) => {
-        ret.push(todo_tohtml(t))
+        ret.push(todo_tohtml(t,model))
     })
-    return Ballast.h('ul', ret)
+    return Ballast.h('ul.todo-list', ret)
 }
 
-function html (model:M) {
-    return Ballast.h("div",[
-        Ballast.h("input", {
+function section_header() {
+    return Ballast.h('header.header',[
+        Ballast.h('h1','todos'),
+        Ballast.h("input.new-todo", {
             props: {
-                placeholder:"Add"
+                placeholder:"What needs to be done?",
+                autofocus:true,
+                autocomplete:"off"
             },
             on: {
                 change: addTodo
             }
-        }),
-        todos_tohtml(model.todos),
-        Ballast.h('div',`${model.todos.size} items left`)
+        },[])
     ])
 }
 
-function editTodo (evt) {
-    console.log("edit")
-    console.log(evt)
+function section_main(model:M){
+    return Ballast.h("section.main",[
+        Ballast.h('input.toggle-all',{props:{type:'checkbox'},on:{click:allDone}}),
+        todos_tohtml(model.todos,model),
+    ])
+}
+
+function html_filter(f,model) {
+    return Ballast.h('li',[Ballast.h('a',{
+        props:{
+            href:`#/${f}`
+        },
+        class:{
+            selected:f===model.visibility
+        }
+    },
+    _.capitalize(f))
+])}
+
+function section_footer(model:M){
+    return Ballast.h('footer.footer',
+    [
+        Ballast.h('span.todo-count',`${model.todos.size} items left`),
+        Ballast.h('ul.filters',
+        [
+            html_filter('all',model),
+            html_filter('active',model),
+            html_filter('completed',model)
+        ]),
+        Ballast.h('button.clear-completed',{
+            style:{
+                display:model.todos.size > 2
+            },
+            on:{
+                click:(evt)=>{Ballast.dispatch({id:'clear-completed'})}
+            }
+        },'Clear completed')
+    ])
+}
+
+function html_footer_info(){
+    return Ballast.h('footer.info',[
+    Ballast.h('p','Double-click to edit a todo'),
+    Ballast.h('p',['Written by ',Ballast.h('a',{
+        props:{
+            href:'mailto:matthieu.dubet@gmail.com'
+        }
+    },'Matthieu Dubet')]),
+    Ballast.h('p',['Implementation of ',Ballast.h('a',{
+        props:{
+            href:'http://todomvc.com'
+        }
+    },'TodoMVC')])
+    ])
+}
+
+function html (model:M) {
+    return Ballast.h('div',[
+        Ballast.h('section.todoapp',
+        [
+            section_header(),
+            section_main(model),
+            section_footer(model)
+        ]),
+        html_footer_info()
+    ])
+}
+
+function editTodo (todo:Todo) {
+    Ballast.dispatch ({type:'edit-todo',id:todo.id})
+}
+
+function removeTodo (todo:Todo) {
+    Ballast.dispatch ({type:'remove-todo',id:todo.id})
 }
 
 function addTodo (evt) {
     let val = evt.target.value
     evt.target.value = '' //clear the input
     Ballast.dispatch (
-        {type:'add-todo',todo:val},
+        {type:'add-todo',todo:val.trim()},
         (apply,model:M) => {
             setTimeout( function () {
                 apply()
