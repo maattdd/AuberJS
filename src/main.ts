@@ -88,7 +88,7 @@ function todo_tohtml (todo:Todo,model:M) {
             Ballast.h('label',
             {
                 on: {
-                    dblclick:(evt) => {editTodo(todo)}
+                    dblclick:(evt) => {Ballast.dispatch ({type:'edit-todo',id:todo.id})}
                 }
             },
             todo.todo
@@ -96,7 +96,7 @@ function todo_tohtml (todo:Todo,model:M) {
             Ballast.h('button.destroy',
             {
                 on:{
-                    click:(evt)=>{removeTodo(todo)}
+                    click:(evt)=>{Ballast.dispatch ({type:'remove-todo',id:todo.id})}
                 }
             })])
     ])
@@ -128,7 +128,10 @@ function section_header() {
 
 function section_main(model:M){
     return Ballast.h("section.main",[
-        Ballast.h('input.toggle-all',{props:{type:'checkbox'},on:{click:allDone}}),
+        Ballast.h('input.toggle-all',{
+            props:{type:'checkbox'},
+            on:{click:Ballast.dispatch({id:'toggle-all'})}
+        }),
         todos_tohtml(model.todos,model),
     ])
 }
@@ -192,14 +195,6 @@ function html (model:M) {
         ]),
         html_footer_info()
     ])
-}
-
-function editTodo (todo:Todo) {
-    Ballast.dispatch ({type:'edit-todo',id:todo.id})
-}
-
-function removeTodo (todo:Todo) {
-    Ballast.dispatch ({type:'remove-todo',id:todo.id})
 }
 
 function addTodo (evt) {
