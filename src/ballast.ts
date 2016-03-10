@@ -16,7 +16,7 @@ var patch = snabbdom.init([ // Init patch function with choosen modules
   require('snabbdom/modules/eventlisteners'), // attaches event listeners
 ]);
 
-require("../public/bower_components/picnic/picnic.min.css")
+//require("../public/bower_components/picnic/picnic.min.css")
 require("./ballast.css");
 //require("")
 
