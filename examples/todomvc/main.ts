@@ -1,4 +1,4 @@
-import Ballast = require('./ballast')
+import Ballast = require('../../src/ballast')
 import Immutable = require('immutable')
 import _ = require('lodash');
 
@@ -15,8 +15,9 @@ var m = {
     counter     : 0,
     todos       : Immutable.List<Todo>(),
     visibility  : 'all',
-    editedTodo  : 0
+    editedTodo  : undefined
 }
+
 type M = typeof m;
 
 Ballast.init(
@@ -30,6 +31,12 @@ interface Action {
     type: string
     todo?: string
     id?:number
+}
+
+function findTodoIndex(id:number,todos:Todos) : number{
+    return todos.findIndex((todo)=>{
+        return todo.id === id
+    })
 }
 
 function update (model:M,action:Action) : M {
@@ -46,19 +53,40 @@ function update (model:M,action:Action) : M {
 
         case "remove-todo":
         var ret = model;
-        ret.todos = ret.todos.remove(
-            ret.todos.findIndex((todo)=>{
-                return todo.id === action.id
-            })
-        )
+        ret.todos = ret.todos.remove(findTodoIndex(action.id,model.todos))
         return ret
 
         case "edit-todo":
-        var ret = model;
+        var ret = model
         ret.editedTodo = action.id
         return ret
+
+        case "completed-todo":
+        var ret = model
+        var idx = findTodoIndex(action.id,model.todos)
+        var todo : Todo = ret.todos[idx]
+        todo.completed = true
+        ret.todos = ret.todos.set(idx,todo)
+        return ret
+
+        case "end-edit-todo":
+        var ret = model;
+        ret.editedTodo = undefined
+        return ret;
+
+        case "clear-completed":
+        var ret = model;
+        ret.todos = ret.todos.filter(todo=>!todo.completed).toList()
+        return ret;
+
+        case "toggle-all":
+        var ret = model
+        ret.todos = ret.todos.map(todo=>{todo.completed=true; return todo}).toList()
+        return ret
+
     }
-    return model
+    console.log("Unknown action: " + action.type)
+    return model //nothing, could be undefined.
 }
 
 function uncompletedTodos (todos:Todos){
@@ -82,7 +110,7 @@ function todo_tohtml (todo:Todo,model:M) {
                     type: 'checkbox'
                 },
                 on: {
-                    toggle:() => {Ballast.dispatch ({type:'completed-todo',id:todo.id})}
+                    toggle:(evt) => {Ballast.dispatch ({type:'completed-todo',id:todo.id})}
                 }
             }),
             Ballast.h('label',
@@ -130,7 +158,7 @@ function section_main(model:M){
     return Ballast.h("section.main",[
         Ballast.h('input.toggle-all',{
             props:{type:'checkbox'},
-            on:{click:Ballast.dispatch({id:'toggle-all'})}
+            //on:{click:Ballast.dispatch({id:'toggle-all'})}
         }),
         todos_tohtml(model.todos,model),
     ])
@@ -163,7 +191,7 @@ function section_footer(model:M){
                 display:model.todos.size > 2
             },
             on:{
-                click:(evt)=>{Ballast.dispatch({id:'clear-completed'})}
+                //click:(evt)=>{Ballast.dispatch({id:'clear-completed'})}
             }
         },'Clear completed')
     ])
@@ -200,12 +228,5 @@ function html (model:M) {
 function addTodo (evt) {
     let val = evt.target.value
     evt.target.value = '' //clear the input
-    Ballast.dispatch (
-        {type:'add-todo',todo:val.trim()},
-        (apply,model:M) => {
-            setTimeout( function () {
-                apply()
-            },1000)
-        }
-    )
+    Ballast.dispatch ({type:'add-todo',todo:val})
 }

@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "scripts": {
+    "start": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js --content-base ./ --progress --inline --hot"
+  },
+  "author": "Matthieu Dubet",
+  "license": "ISC",
+  "dependencies": {
+    "css-loader": "^0.23.1",
+    "immutable": "^3.7.6",
+    "imports-loader": "^0.6.5",
+    "lodash": "^4.6.1",
+    "style-loader": "^0.13.0",
+    "todomvc-app-css": "^2.0.4",
+    "webpack": "^1.12.14",
+    "webpack-dev-server": "^1.14.1",
+    "webpack-stream": "^3.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^1.7.5"
+  }
+}
