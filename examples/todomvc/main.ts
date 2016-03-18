@@ -15,7 +15,8 @@ var m = {
     counter     : 0,
     todos       : Immutable.List<Todo>(),
     visibility  : 'all',
-    editedTodo  : undefined
+    editedTodo  : undefined,
+    editedTitle : ''
 }
 
 type M = typeof m;
@@ -31,6 +32,7 @@ interface Action {
     type: string
     todo?: string
     id?:number
+    checked?:boolean
 }
 
 function findTodoIndex(id:number,todos:Todos) : number{
@@ -61,15 +63,24 @@ function update (model:M,action:Action) : M {
         ret.editedTodo = action.id
         return ret
 
-        case "completed-todo":
+        case "toggle-completed-todo":
         var ret = model
         var idx = findTodoIndex(action.id,model.todos)
-        var todo : Todo = ret.todos[idx]
-        todo.completed = true
+        var todo = ret.todos.get(idx)
+        todo.completed = action.checked
         ret.todos = ret.todos.set(idx,todo)
         return ret
 
         case "end-edit-todo":
+        var ret = model;
+        var idx = findTodoIndex(action.id,model.todos)
+        var todo = ret.todos.get(idx)
+        todo.todo = action.todo
+        ret.todos = ret.todos.set(idx,todo)
+        ret.editedTodo = undefined
+        return ret;
+
+        case "cancel-edit-todo":
         var ret = model;
         ret.editedTodo = undefined
         return ret;
@@ -79,11 +90,10 @@ function update (model:M,action:Action) : M {
         ret.todos = ret.todos.filter(todo=>!todo.completed).toList()
         return ret;
 
-        case "toggle-all":
+        case "toggle-completed-all":
         var ret = model
-        ret.todos = ret.todos.map(todo=>{todo.completed=true; return todo}).toList()
+        ret.todos = ret.todos.map(todo=>{todo.completed=!todo.completed; return todo}).toList()
         return ret
-
     }
     console.log("Unknown action: " + action.type)
     return model //nothing, could be undefined.
@@ -98,7 +108,7 @@ function uncompletedTodos (todos:Todos){
 function todo_tohtml (todo:Todo,model:M) {
     return Ballast.h('li.todo',{
         class:{
-            completed:todo.completed && todo.id != model.editedTodo,
+            completed:todo.completed, //&& todo.id != model.editedTodo,
             editing:todo.id === model.editedTodo
         }
     },
@@ -110,7 +120,10 @@ function todo_tohtml (todo:Todo,model:M) {
                     type: 'checkbox'
                 },
                 on: {
-                    toggle:(evt) => {Ballast.dispatch ({type:'completed-todo',id:todo.id})}
+                    change:(evt) => {Ballast.dispatch ({
+                        type:'toggle-completed-todo',
+                        id:todo.id,
+                        checked:evt.target.checked})}
                 }
             }),
             Ballast.h('label',
@@ -126,7 +139,22 @@ function todo_tohtml (todo:Todo,model:M) {
                 on:{
                     click:(evt)=>{Ballast.dispatch ({type:'remove-todo',id:todo.id})}
                 }
-            })])
+            })]),
+            Ballast.h('input.edit',{
+                on: {
+                    blur:(evt)=>{console.log('blur') ; Ballast.dispatch ({type:'end-edit-todo',id:todo.id, todo:evt.target.value})},
+                    keyup:(evt)=>{
+                        let key = evt.keyCode
+                        console.log(key)
+                        if (key === 27) {
+                            evt.target.value = ''
+                            Ballast.dispatch ({type:'cancel-edit-todo',id:todo.id})
+                        } else if (key === 13) {
+                            Ballast.dispatch ({type:'end-edit-todo',id:todo.id, todo:evt.target.value})
+                        }
+                    }
+                }
+            })
     ])
 }
 
@@ -158,7 +186,7 @@ function section_main(model:M){
     return Ballast.h("section.main",[
         Ballast.h('input.toggle-all',{
             props:{type:'checkbox'},
-            //on:{click:Ballast.dispatch({id:'toggle-all'})}
+            on:{click:()=>Ballast.dispatch({type:'toggle-completed-all'})}
         }),
         todos_tohtml(model.todos,model),
     ])
@@ -179,7 +207,8 @@ function html_filter(f,model) {
 function section_footer(model:M){
     return Ballast.h('footer.footer',
     [
-        Ballast.h('span.todo-count',`${model.todos.size} items left`),
+        Ballast.h('span.todo-count',`${uncompletedTodos(model.todos).size}`),
+        " items left",
         Ballast.h('ul.filters',
         [
             html_filter('all',model),
@@ -226,7 +255,7 @@ function html (model:M) {
 }
 
 function addTodo (evt) {
-    let val = evt.target.value
+    let val = evt.target.value.trim()
     evt.target.value = '' //clear the input
     Ballast.dispatch ({type:'add-todo',todo:val})
 }
