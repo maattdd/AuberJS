@@ -92,11 +92,16 @@ function update (model:M,action:Action) : M {
 
         case "toggle-completed-all":
         var ret = model
-        ret.todos = ret.todos.map(todo=>{todo.completed=!todo.completed; return todo}).toList()
+        let v = !isAllCompleted(ret.todos)
+        ret.todos = ret.todos.map(todo=>{todo.completed=v; return todo}).toList()
         return ret
     }
     console.log("Unknown action: " + action.type)
     return model //nothing, could be undefined.
+}
+
+function isAllCompleted (todos:Todos) {
+    return todos.size > 0 && remaining(todos) === 0
 }
 
 function uncompletedTodos (todos:Todos){
@@ -198,7 +203,10 @@ function section_header() {
 function section_main(model:M){
     return Ballast.h("section.main",[
         Ballast.h('input.toggle-all',{
-            props:{type:'checkbox'},
+            props:{
+                type:'checkbox',
+                checked:isAllCompleted(model.todos)
+            },
             on:{click:()=>Ballast.dispatch({type:'toggle-completed-all'})}
         }),
         todos_tohtml(model.todos,model),
@@ -220,23 +228,24 @@ function html_filter(f,model) {
 function section_footer(model:M){
     return Ballast.h('footer.footer',
     [
-        Ballast.h('span.todo-count',`${uncompletedTodos(model.todos).size}`),
-        remaining(model.todos) > 1 ? 'items':'item',
-        ' left',
-        Ballast.h('ul.filters',
-        [
+        Ballast.h('span.todo-count',[
+            Ballast.h('strong',`${uncompletedTodos(model.todos).size} `),
+            remaining(model.todos) > 1 ? 'items':'item',
+            ' left',
+        ]),
+        Ballast.h('ul.filters',[
             html_filter('all',model),
             html_filter('active',model),
             html_filter('completed',model)
         ]),
+        model.todos.size > remaining(model.todos)?
         Ballast.h('button.clear-completed',{
             style:{
-                display:model.todos.size > remaining(model.todos)
             },
             on:{
                 click:(evt)=>{Ballast.dispatch({type:'clear-completed'})}
             }
-        },'Clear completed')
+        },'Clear completed'):Ballast.h('div')
     ])
 }
 
@@ -261,8 +270,8 @@ function html (model:M) {
         Ballast.h('section.todoapp',
         [
             section_header(),
-            section_main(model),
-            section_footer(model)
+            model.todos.size > 0 ? section_main(model):Ballast.h('div'),
+            model.todos.size > 0 ? section_footer(model):Ballast.h('div')
         ]),
         html_footer_info()
     ])
