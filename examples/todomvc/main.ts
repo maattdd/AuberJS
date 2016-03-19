@@ -105,6 +105,12 @@ function uncompletedTodos (todos:Todos){
     });
 }
 
+function remaining (todos:Todos) {
+    return todos.filter((todo)=>{
+        return !todo.completed
+    }).size;
+}
+
 function todo_tohtml (todo:Todo,model:M) {
     return Ballast.h('li.todo',{
         class:{
@@ -117,7 +123,8 @@ function todo_tohtml (todo:Todo,model:M) {
             Ballast.h('input.toggle',
             {
                 props: {
-                    type: 'checkbox'
+                    type: 'checkbox',
+                    checked: todo.completed
                 },
                 on: {
                     change:(evt) => {Ballast.dispatch ({
@@ -142,7 +149,13 @@ function todo_tohtml (todo:Todo,model:M) {
             })]),
             Ballast.h('input.edit',{
                 on: {
-                    blur:(evt)=>{console.log('blur') ; Ballast.dispatch ({type:'end-edit-todo',id:todo.id, todo:evt.target.value})},
+                    blur:(evt)=>{
+                        let val = evt.target.value.trim()
+                        if (val != '') {
+                            console.log('blur')
+                            Ballast.dispatch ({type:'end-edit-todo',id:todo.id, todo:evt.target.value})
+                        }
+                    },
                     keyup:(evt)=>{
                         let key = evt.keyCode
                         console.log(key)
@@ -208,7 +221,8 @@ function section_footer(model:M){
     return Ballast.h('footer.footer',
     [
         Ballast.h('span.todo-count',`${uncompletedTodos(model.todos).size}`),
-        " items left",
+        remaining(model.todos) > 1 ? 'items':'item',
+        ' left',
         Ballast.h('ul.filters',
         [
             html_filter('all',model),
@@ -217,10 +231,10 @@ function section_footer(model:M){
         ]),
         Ballast.h('button.clear-completed',{
             style:{
-                display:model.todos.size > 2
+                display:model.todos.size > remaining(model.todos)
             },
             on:{
-                //click:(evt)=>{Ballast.dispatch({id:'clear-completed'})}
+                click:(evt)=>{Ballast.dispatch({type:'clear-completed'})}
             }
         },'Clear completed')
     ])
