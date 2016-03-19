@@ -22,6 +22,7 @@ var m = {
 type M = typeof m;
 
 Ballast.init(
+    false,
     module,
     document.body,
     m,

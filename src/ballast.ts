@@ -28,11 +28,13 @@ var m;
 var v;
 var node;
 var up;
+var r;
 
 var init_dom;
 var init_model;
 var init_view;
 var init_update;
+var init_reactor;
 
 if (module.hot) {
     module.hot.accept()
@@ -41,17 +43,18 @@ if (module.hot) {
         data.init_model = init_model;
         data.init_view = init_view;
         data.init_update = init_update;
+        data.init_reactor = init_reactor
     })
 }
 
 if (module.hot.data) {
     var d = module.hot.data
-    init2(d.init_dom,d.init_model,d.init_view,d.init_update)
+    init2(d.init_reactor,d.init_dom,d.init_model,d.init_view,d.init_update)
 }
 
 function draw() {
     if (m && node) {
-        const new_node = ballastView(m)
+        const new_node = ballastView(r,m)
         patch(node,new_node)
         node = new_node
     } else {
@@ -84,6 +87,7 @@ export function dispatch (action,callback=(update,model)=>{updater(action)}) {
 }
 
 export function init <UserModel> (
+    reactor:boolean,
     parent_module,
     dom:HTMLElement,
     model:UserModel,
@@ -93,15 +97,17 @@ export function init <UserModel> (
         var pmh = parent_module.hot
         parent_module.hot.accept()
     }
-    init2(dom,model,view,update)
+    init2(reactor,dom,model,view,update)
 }
 
-function init2 <T> (dom,model:T,view,update) {
+function init2 <T> (reactor,dom,model:T,view,update) {
     init_dom = dom;
     init_view = view;
     init_model = model;
     init_update = update;
+    init_reactor = reactor;
 
+    r = reactor;
     v = view;
     up = update;
 
@@ -110,7 +116,7 @@ function init2 <T> (dom,model:T,view,update) {
     } else {
         m = new Model<T>(model)
     }
-    node = ballastView(m);
+    node = ballastView(reactor,m);
 
     var container = document.getElementById('ballast_container')
     if (!container) {
@@ -166,7 +172,7 @@ function toggleDebug (evt) {
     draw()
 }
 
-function ballastView <T> (model:Model<T>) {
+function ballastView <T> (reactor:boolean,model:Model<T>) {
     var find_model = function (m:Model<T>) : T {
         // current
         if (!model.debug) { return model.modelHistory.last(); }
@@ -182,7 +188,7 @@ function ballastView <T> (model:Model<T>) {
         h('div#ballast_client',[
             v(find_model(model))
         ]),
-        h('div#ballast_reactor',[
+        reactor ? h('div#ballast_reactor',[
             h('label',[
                 h('input', {
                     props: {
@@ -209,6 +215,6 @@ function ballastView <T> (model:Model<T>) {
                     input: viewHistory
                 }
             },[])
-        ])
+        ]):h('div')
     ])
 }
