@@ -24,6 +24,15 @@ function print (msg, color='blue') {
     console.info("[Ballast] %c" + msg, "color:" + color + ";font-weight:bold;");
 }
 
+type UserModel<K,V,T> = Immutable.OrderedMap<K,V> | Immutable.OrderedSet<T>
+
+export class Component {
+    model;
+    view;
+    update
+}
+
+
 var m;
 var v;
 var node;
@@ -69,7 +78,13 @@ function updater (action) {
     print("Applying action:")
     console.log(action)
     m.actionHistory = m.actionHistory.push(action)
-    m.modelHistory = m.modelHistory.push(up(m.currentModel,action))
+    const cloned = _.cloneDeep(m.currentModel)
+    console.log(m.currentModel)
+    console.log(cloned)
+    console.log(m.currentModel === cloned)
+    console.log(m.currentModel == cloned)
+    console.log(_.isEqual(m.currentModel,cloned))
+    m.modelHistory = m.modelHistory.push(up(cloned,action))
     m.debug_time = m.historySize-1
     print("New model:")
     console.log(m.currentModel)
@@ -86,13 +101,13 @@ export function dispatch (action,callback=(update,model)=>{updater(action)}) {
     callback(upp,m.currentModel)
 }
 
-export function init <UserModel> (
+export function init <K,V,T> (
     reactor:boolean,
     parent_module,
     dom:HTMLElement,
-    model:UserModel,
+    model:UserModel<K,V,T>,
     view,
-    update:(UserModel,action)=>UserModel) {
+    update:(UserModel,action)=>UserModel<K,V,T>) {
     if (parent_module.hot) {
         var pmh = parent_module.hot
         parent_module.hot.accept()

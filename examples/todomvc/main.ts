@@ -1,6 +1,9 @@
+//@flow
+
 import Ballast = require('../../src/ballast')
 import Immutable = require('immutable')
 import _ = require('lodash');
+var Router5 = require('router5')
 
 require('todomvc-app-css/index.css')
 
@@ -11,6 +14,16 @@ type Todo = {
 }
 type Todos = Immutable.List<Todo>
 
+var ModelRecord = Immutable.Record({
+    counter     : 0,
+    todos       : Immutable.List<Todo>(),
+    visibility  : 'all',
+    editedTodo  : undefined,
+    editedTitle : ''
+})
+
+var mm = new ModelRecord({})
+
 var m = {
     counter     : 0,
     todos       : Immutable.List<Todo>(),
@@ -19,13 +32,14 @@ var m = {
     editedTitle : ''
 }
 
-type M = typeof m;
+//type M = typeof ModelRecord;
+type M = any
 
 Ballast.init(
     false,
     module,
     document.body,
-    m,
+    mm,
     html,
     update)
 
